@@ -3,3 +3,5 @@
 bidirectional rnn for text classification
 
 implemented by tensorflow v1.2.0
+
+add attention layer
