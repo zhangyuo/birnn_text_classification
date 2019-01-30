@@ -88,12 +88,14 @@ class BiRNN(object):
 
     def embedding_layer_op(self):
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
-            # self._word_embeddings = tf.Variable(tf.truncated_normal([self.vocab_size, self.embedding_dim], stddev=0.1),
+            self._word_embeddings = tf.Variable(
+                tf.truncated_normal([self.vocab_size, self.embedding_dim], stddev=0.1, mean=0.5),
+                # tf.initialize_variables([self.vocab_size, self.embedding_dim],),
+                trainable=False,
+                name="_word_embeddings")
+            # self._word_embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_dim], -1.0, 1.0),
             #                                     trainable=False,
             #                                     name="_word_embeddings")
-            self._word_embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_dim], -1.0, 1.0),
-                                                trainable=False,
-                                                name="_word_embeddings")
             self.word_embeddings = tf.nn.embedding_lookup(params=self._word_embeddings,
                                                           ids=self.input_x,
                                                           name='word_embeddings')
@@ -115,8 +117,8 @@ class BiRNN(object):
             lstm_bw_cell_list = [tf.contrib.rnn.LSTMCell(self.hidden_size) for _ in list(range(self.num_layer))]
             lstm_bw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(lstm_bw_cell_list),
                                                            output_keep_prob=self.dropout_keep_prob)
-        # trans self.input_x
-        # self.input_x shape: (batch_size , sequence_length, hidden_size)
+        # self.input_x shape: (batch_size , sequence_length)
+        # self.word_embeddings shape: (batch_size , sequence_length, embedding_dim)
         # bidirection rnn requires input shape : (sequence_length, batch_size, hidden_size)
         hidden_inputs = tf.transpose(self.word_embeddings, [1, 0, 2])
         # bidirection rnn target input is a list

@@ -24,8 +24,8 @@ MIDDLE_PATH = ''
 # percentage of the training data to use for validation
 dev_sample_percentage = 0.1
 # word embedding dim
-EMBEDDING_DIM = 256
-# hidden units of RNN , as well as dimensionality of character embedding
+EMBEDDING_DIM = 100
+# hidden units of RNN, as well as dimensionality of word embedding
 hidden_size = 100
 # number of layers of RNN
 num_layer = 2

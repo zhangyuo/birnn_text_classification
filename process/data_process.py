@@ -25,7 +25,7 @@ def load_data_and_labels(path):
     y_text = [k[1] for k in positive_examples]
     x_text = [clean_str(sent) for sent in x_text]
     # Generate labels: pos=[1,0], neg=[0,1]
-    y = np.array([[1, 0] if k == 0 else [0, 1] for k in y_text])
+    y = np.array([[1, 0] if k.strip() == '0' else [0, 1] for k in y_text])
     return [x_text, y]
 
 

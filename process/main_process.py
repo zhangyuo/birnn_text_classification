@@ -29,8 +29,8 @@ def train():
     # build vocabulary
     max_document_length = max([len(x.split(" ")) for x in x_text])
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
-    vocab_size = len(vocab_processor.vocabulary_)
     x = np.array(list(vocab_processor.fit_transform(x_text)))
+    vocab_size = len(vocab_processor.vocabulary_)
     # Randomly shuffle data
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
@@ -42,7 +42,7 @@ def train():
     x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
     y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
     del x, y, x_shuffled, y_shuffled
-    logger.info("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
+    logger.info("Vocabulary Size: {:d}".format(vocab_size))
     logger.info("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
     # define pretrained embedding
     embedding_dim = EMBEDDING_DIM
