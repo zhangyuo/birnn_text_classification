@@ -91,11 +91,9 @@ class BiRNN(object):
             self._word_embeddings = tf.Variable(
                 tf.truncated_normal([self.vocab_size, self.embedding_dim], stddev=0.1, mean=0.5),
                 # tf.initialize_variables([self.vocab_size, self.embedding_dim],),
+                # tf.random_uniform([self.vocab_size, self.embedding_dim], -1.0, 1.0),
                 trainable=False,
                 name="_word_embeddings")
-            # self._word_embeddings = tf.Variable(tf.random_uniform([self.vocab_size, self.embedding_dim], -1.0, 1.0),
-            #                                     trainable=False,
-            #                                     name="_word_embeddings")
             self.word_embeddings = tf.nn.embedding_lookup(params=self._word_embeddings,
                                                           ids=self.input_x,
                                                           name='word_embeddings')
@@ -105,18 +103,38 @@ class BiRNN(object):
         define birnn layer
         :return:
         """
-        # define forward cell
-        with tf.name_scope('fw_rnn'), tf.variable_scope('fw_rnn'):
-            logger.info(tf.get_variable_scope().name)
-            lstm_fw_cell_list = [tf.contrib.rnn.LSTMCell(self.hidden_size) for _ in list(range(self.num_layer))]
-            lstm_fw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(lstm_fw_cell_list),
-                                                           output_keep_prob=self.dropout_keep_prob)
-        # define backward cell
-        with tf.name_scope('bw_rnn'), tf.variable_scope('bw_rnn'):
-            logger.info(tf.get_variable_scope().name)
-            lstm_bw_cell_list = [tf.contrib.rnn.LSTMCell(self.hidden_size) for _ in list(range(self.num_layer))]
-            lstm_bw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(lstm_bw_cell_list),
-                                                           output_keep_prob=self.dropout_keep_prob)
+
+        def gru():
+            # define forward cell
+            with tf.name_scope('fw_rnn'), tf.variable_scope('fw_rnn'):
+                logger.info(tf.get_variable_scope().name)
+                gru_fw_cell_list = [tf.contrib.rnn.GRUCell(self.hidden_size) for _ in list(range(self.num_layer))]
+                gru_fw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(gru_fw_cell_list),
+                                                              output_keep_prob=self.dropout_keep_prob)
+            # define backward cell
+            with tf.name_scope('bw_rnn'), tf.variable_scope('bw_rnn'):
+                logger.info(tf.get_variable_scope().name)
+                gru_bw_cell_list = [tf.contrib.rnn.GRUCell(self.hidden_size) for _ in list(range(self.num_layer))]
+                gru_bw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(gru_bw_cell_list),
+                                                              output_keep_prob=self.dropout_keep_prob)
+            return gru_fw_cell_m, gru_bw_cell_m
+
+        def lstm():
+            # define forward cell
+            with tf.name_scope('fw_rnn'), tf.variable_scope('fw_rnn'):
+                logger.info(tf.get_variable_scope().name)
+                lstm_fw_cell_list = [tf.contrib.rnn.LSTMCell(self.hidden_size) for _ in list(range(self.num_layer))]
+                lstm_fw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(lstm_fw_cell_list),
+                                                               output_keep_prob=self.dropout_keep_prob)
+            # define backward cell
+            with tf.name_scope('bw_rnn'), tf.variable_scope('bw_rnn'):
+                logger.info(tf.get_variable_scope().name)
+                lstm_bw_cell_list = [tf.contrib.rnn.LSTMCell(self.hidden_size) for _ in list(range(self.num_layer))]
+                lstm_bw_cell_m = tf.contrib.rnn.DropoutWrapper(tf.contrib.rnn.MultiRNNCell(lstm_bw_cell_list),
+                                                               output_keep_prob=self.dropout_keep_prob)
+                return lstm_fw_cell_m, lstm_bw_cell_m
+
+        rnn_fw_cell, rnn_bw_cell = lstm()
         # self.input_x shape: (batch_size , sequence_length)
         # self.word_embeddings shape: (batch_size , sequence_length, embedding_dim)
         # bidirection rnn requires input shape : (sequence_length, batch_size, hidden_size)
@@ -126,8 +144,8 @@ class BiRNN(object):
         hidden_inputs = tf.split(hidden_inputs, self.sequence_length, 0)
         # build bidirection rnn
         with tf.name_scope('bi_rnn'), tf.variable_scope('bi_rnn'):
-            self.hidden_outputs, _, _ = tf.contrib.rnn.static_bidirectional_rnn(lstm_fw_cell_m,
-                                                                                lstm_bw_cell_m,
+            self.hidden_outputs, _, _ = tf.contrib.rnn.static_bidirectional_rnn(rnn_fw_cell,
+                                                                                rnn_bw_cell,
                                                                                 hidden_inputs,
                                                                                 dtype=tf.float32)
 
